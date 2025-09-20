@@ -1,5 +1,6 @@
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel, HttpUrl, EmailStr
 from typing import List, Optional, Dict
+
 
 class ScrapeRequest(BaseModel):
     urls: List[HttpUrl]
@@ -30,3 +31,25 @@ class ProductDetails(BaseModel):
 class ErrorResponse(BaseModel):
     url: str
     error: str
+    
+    
+class User(BaseModel):
+    id: int
+    email: EmailStr
+    is_active: bool
+
+    class Config:
+        from_attributes = True # Replaces orm_mode in Pydantic v2
+
+# For creating a new user (request body)
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str
+
+# --- Schemas for Token Handling (we'll use these in the next step) ---
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    email: Optional[EmailStr] = None
