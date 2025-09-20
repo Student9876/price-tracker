@@ -53,3 +53,23 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     email: Optional[EmailStr] = None
+    
+    
+class TrackedProductInfo(BaseModel):
+    name: Optional[str] = "Not Found"
+    brand: Optional[str] = "Not Found"
+    image_urls: List[HttpUrl] = []
+
+    class Config:
+        from_attributes = True
+
+# The main response schema for a single tracked product
+class TrackedProductResponse(BaseModel):
+    id: int
+    url: HttpUrl
+    initial_price: Optional[float] = None
+    current_price: Optional[float] = None
+    product: TrackedProductInfo # Nest the product info
+
+    class Config:
+        from_attributes = True
