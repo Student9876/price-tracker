@@ -5,14 +5,12 @@ from urllib.parse import urlparse
 from schemas import ErrorResponse
 # Import the new, modular scraper classes
 from scrapers.amazon import AmazonScraper
-from scrapers.flipkart import FlipkartScraper
 
 class ScraperFactory:
     def __init__(self):
         self._scrapers = {
             "www.amazon.in": AmazonScraper(),
             "www.amazon.com": AmazonScraper(),
-            "www.flipkart.com": FlipkartScraper(),
         }
 
     def get_scraper(self, url: str):
@@ -48,25 +46,13 @@ async def scrape_url(url: str):
             resp.raise_for_status()
             
             if resp.status_code != 200:
-                # trigger selector discovery/update for Flipkart specifically
-                if isinstance(scraper, FlipkartScraper):
-                    seed_list = [url,
-                                "https://www.flipkart.com/apple-iphone-14-midnight-128-gb/p/itm9e6293c322a84",
-                                "https://www.flipkart.com/some-other-sample-product/p/itm..."]
-                    updated, report = await scraper.auto_update_selectors(seed_list, fetcher=None, replace_if_confident=True)
-                    print("Flipkart selector auto-update report:", report)
                 return ErrorResponse(url=url, error=f"Blocked (possible captcha/bot challenge). Status: {resp.status_code}")
 
             soup = BeautifulSoup(resp.text, "html.parser")
             product = scraper.scrape(soup, url)
 
-            # If essential fields are missing, optionally attempt discovery automatically:
-            if (not product.name or product.name == "Not Found" or not product.listing.price):
-                if isinstance(scraper, FlipkartScraper):
-                    seed_list = [url]  # you may add more relevant pages here
-                    updated, report = await scraper.auto_update_selectors(seed_list, fetcher=None, replace_if_confident=False)
-                    print("Auto discovery attempted; report:", report)
-            
+            # If essential fields are missing, you can implement discovery logic per-scraper if/when needed.
+
             return product
 
     except Exception as e:

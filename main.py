@@ -11,7 +11,7 @@ app = FastAPI(
     description="An API that scrapes detailed product information from a list of URLs."
 )
 
-# ... THE REST OF YOUR main.py REMAINS UNCHANGED ...
+
 @app.post("/scrape", response_model=List[Union[ProductDetails, ErrorResponse]])
 async def scrape_products(request: ScrapeRequest):
     if not request.urls:
