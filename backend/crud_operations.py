@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 import models.user as models
-import schemas
+import schemas as schemas
 import models.product as product_models
 # --- User CRUD Operations ---
 
@@ -69,3 +69,26 @@ def get_tracked_products_for_user(db: Session, user_id: int):
     Fetches all products a specific user is tracking.
     """
     return db.query(product_models.TrackedProduct).filter(product_models.TrackedProduct.owner_id == user_id).all()
+
+
+def get_all_active_tracked_products(db: Session):
+    """Fetches all tracked products that are currently active."""
+    return db.query(models.product.TrackedProduct).filter(models.product.TrackedProduct.is_active == True).all()
+
+def add_price_history_record(db: Session, tracked_product_id: int, price: float):
+    """Adds a new price entry to the history table."""
+    db_price_history = models.price_history.PriceHistory(
+        tracked_product_id=tracked_product_id,
+        price=price
+    )
+    db.add(db_price_history)
+    db.commit()
+    return db_price_history
+
+def update_tracked_product_price(db: Session, tracked_product_id: int, new_price: float):
+    """Updates the 'current_price' on the main tracked product record."""
+    db_tracked_product = db.query(models.product.TrackedProduct).filter(models.product.TrackedProduct.id == tracked_product_id).first()
+    if db_tracked_product:
+        db_tracked_product.current_price = new_price
+        db.commit()
+    return db_tracked_product

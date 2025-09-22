@@ -7,7 +7,7 @@ import asyncio  # ADDED
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
 from core import security
-import crud_operations
+import crud_operations as crud_operations
 from api.deps import get_current_user
 
 
@@ -15,9 +15,11 @@ from api.deps import get_current_user
 from db.session import SessionLocal, engine
 from db.base import Base
 import models.user  # Import the user model file
+import models.product  # ADDED: ensure Product mapper is loaded
+import models.price_history  # ADDED: ensure PriceHistory is defined before mapper configuration
 
 # Schema imports
-import schemas
+import schemas as schemas
 
 # Security and scraping imports
 from core.security import get_password_hash

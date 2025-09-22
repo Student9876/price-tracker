@@ -1,8 +1,6 @@
-# models/product.py
-
 from sqlalchemy import Column, Integer, String, Boolean, Numeric, DateTime, ForeignKey, func
 from sqlalchemy.orm import relationship
-from sqlalchemy.dialects.postgresql import JSONB  # Import JSONB for Postgres
+from sqlalchemy.dialects.postgresql import JSONB
 from db.base import Base
 
 class Product(Base):
@@ -13,13 +11,11 @@ class Product(Base):
     signature = Column(String, unique=True, index=True, nullable=False)
     name = Column(String)
     brand = Column(String)
-    
-    # --- NEW FIELDS ---
-    # Use JSONB to store lists and dictionaries efficiently
-    category_path = Column(JSONB)  # For ["Electronics", "Mobiles"]
-    image_urls = Column(JSONB)     # For ["url1", "url2", ...]
-    key_features = Column(JSONB)   # For ["Feature 1", "Feature 2", ...]
-    specifications = Column(JSONB) # For {"OS": "Android", "RAM": "12 GB"}
+    category_path = Column(JSONB)
+    image_urls = Column(JSONB)
+    key_features = Column(JSONB)
+    specifications = Column(JSONB)
+    # The relationship that was here has been moved to TrackedProduct
 
 class TrackedProduct(Base):
     """Links a User to a specific Product URL they are tracking."""
@@ -31,8 +27,6 @@ class TrackedProduct(Base):
     current_price = Column(Numeric(10, 2))
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, server_default=func.now())
-    
-    # --- NEW FIELDS ---
     mrp = Column(Numeric(10, 2))
     currency = Column(String(10))
     stock_status = Column(String)
@@ -46,3 +40,7 @@ class TrackedProduct(Base):
 
     owner = relationship("User", back_populates="tracked_products")
     product = relationship("Product")
+    
+    # --- MOVED HERE ---
+    # This correctly links a TrackedProduct to its many PriceHistory entries.
+    price_history = relationship("PriceHistory", back_populates="tracked_product", cascade="all, delete-orphan")
