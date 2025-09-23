@@ -4,7 +4,7 @@ from urllib.parse import urlparse
 
 from schemas import ErrorResponse
 # Import the new, modular scraper classes
-from scrapers.amazon import AmazonScraper
+from .amazon import AmazonScraper
 
 class ScraperFactory:
     def __init__(self):

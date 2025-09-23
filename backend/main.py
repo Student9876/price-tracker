@@ -23,7 +23,7 @@ import schemas as schemas
 
 # Security and scraping imports
 from core.security import get_password_hash
-from scraper import scrape_url
+from scrapers.factory import scrape_url
 
 # Create all database tables (run this once)
 Base.metadata.create_all(bind=engine)

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from db.session import SessionLocal
 import backend.crud_operations as crud_operations
-from backend.scraper import scrape_url
+from backend.scrapers.factory import scrape_url
 import backend.schemas as schemas
 
 async def check_all_prices():
