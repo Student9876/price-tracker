@@ -1,5 +1,6 @@
 from pydantic import BaseModel, HttpUrl, EmailStr
 from typing import List, Optional, Dict
+from datetime import datetime
 
 
 class ScrapeRequest(BaseModel):
@@ -73,3 +74,47 @@ class TrackedProductResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class PriceHistoryPoint(BaseModel):
+    price: float
+    timestamp: datetime
+
+    class Config:
+        from_attributes = True
+
+# For the detailed single product view
+class ProductResponse(BaseModel):
+    signature: str
+    name: Optional[str] = "Not Found"
+    brand: Optional[str] = "Not Found"
+    category_path: List[str] = []
+    image_urls: List[HttpUrl] = []
+    key_features: List[str] = []
+    specifications: Dict[str, str] = {}
+    
+    class Config:
+        from_attributes = True
+
+# 2. Update the main response schema to be "flatter", matching your database model
+class SingleTrackedProductResponse(BaseModel):
+    # Fields from the TrackedProduct model are now at the top level
+    id: int
+    url: HttpUrl
+    initial_price: Optional[float] = None
+    current_price: Optional[float] = None
+    mrp: Optional[float] = None
+    currency: Optional[str] = None
+    stock_status: Optional[str] = None
+    average_rating: Optional[float] = None
+    num_ratings: Optional[int] = None
+
+    # Nest the canonical product details inside
+    product: ProductResponse # Use the new schema here
+
+    class Config:
+        from_attributes = True
+        
+        
+# For simple success/error messages
+class Msg(BaseModel):
+    msg: str

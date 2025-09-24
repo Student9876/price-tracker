@@ -21,7 +21,7 @@ import models.price_history  # ADDED: ensure PriceHistory is defined before mapp
 # Schema imports
 import schemas as schemas
 
-# Security and scraping imports
+# Security and scraping imports 
 from core.security import get_password_hash
 from scrapers.factory import scrape_url
 
@@ -142,3 +142,52 @@ async def track_product(
     return scraped_data
 
 
+@app.get("/track/{tracked_product_id}", response_model=schemas.SingleTrackedProductResponse)
+def get_single_tracked_product(
+    tracked_product_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.user.User = Depends(get_current_user)
+):
+    """
+    Fetches the full details of a single product a user is tracking.
+    """
+    db_tracked_product = crud_operations.get_tracked_product_by_id(
+        db, tracked_product_id=tracked_product_id, user_id=current_user.id
+    )
+    if db_tracked_product is None:
+        raise HTTPException(status_code=404, detail="Tracked product not found")
+    return db_tracked_product
+
+
+@app.get("/track/{tracked_product_id}/history", response_model=List[schemas.PriceHistoryPoint])
+def get_product_price_history(
+    tracked_product_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.user.User = Depends(get_current_user)
+):
+    """
+    Fetches the price history for a single tracked product for charts.
+    """
+    db_tracked_product = crud_operations.get_tracked_product_by_id(
+        db, tracked_product_id=tracked_product_id, user_id=current_user.id
+    )
+    if db_tracked_product is None:
+        raise HTTPException(status_code=404, detail="Tracked product not found")
+    return db_tracked_product.price_history
+
+
+@app.delete("/track/{tracked_product_id}", response_model=schemas.Msg)
+def delete_tracked_product(
+    tracked_product_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.user.User = Depends(get_current_user)
+):
+    """
+    Stops tracking (deletes) a product for the current user.
+    """
+    deleted_product = crud_operations.delete_tracked_product(
+        db, tracked_product_id=tracked_product_id, user_id=current_user.id
+    )
+    if deleted_product is None:
+        raise HTTPException(status_code=404, detail="Tracked product not found")
+    return {"msg": "Product removed successfully from tracking list"}
