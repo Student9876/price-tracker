@@ -5,6 +5,7 @@ from core.config import settings
 
 import asyncio  # ADDED
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.middleware.cors import CORSMiddleware
 from datetime import timedelta
 from core import security
 import crud_operations as crud_operations
@@ -33,9 +34,25 @@ app = FastAPI(
     description="API for tracking product prices and managing users."
 )
 
+
+
+origins = [
+    "http://localhost:3000", # Your Next.js frontend
+]
+
+# 3. Add the CORSMiddleware to the app
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"], # Allow all methods
+    allow_headers=["*"], # Allow all headers
+)
+
+
+
+
 # Dependency to get a DB session
-
-
 def get_db():
     db = SessionLocal()
     try:
@@ -83,6 +100,13 @@ def login_for_access_token(db: Session = Depends(get_db), form_data: OAuth2Passw
 
     return {"access_token": access_token, "token_type": "bearer"}
 
+
+@app.get("/users/me", response_model=schemas.User)
+def read_users_me(current_user: models.user.User = Depends(get_current_user)):
+    """
+    Fetch the data for the currently authenticated user.
+    """
+    return current_user
 
 # --- Scraper Endpoint ---
 @app.post("/scrape", response_model=List[Union[schemas.ProductDetails, schemas.ErrorResponse]])
