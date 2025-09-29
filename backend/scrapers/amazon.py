@@ -1,4 +1,5 @@
 import re
+import json # Import the json library
 from typing import Optional
 from bs4 import BeautifulSoup
 from schemas import ProductDetails, ListingDetails
@@ -10,8 +11,33 @@ class AmazonScraper:
         return float(price.group(0).replace(',', '')) if price else None
 
     def scrape(self, soup: BeautifulSoup, url: str) -> ProductDetails:
-        # --- Listing-specific Details ---
+        # --- Image Scraping (NEW & IMPROVED LOGIC) ---
+        image_urls = []
+        # Priority 1: Find the main image's high-res data attribute
+        main_image_div = soup.select_one("#imgTagWrapperId img")
+        if main_image_div and 'data-a-dynamic-image' in main_image_div.attrs:
+            try:
+                image_data = json.loads(main_image_div['data-a-dynamic-image'])
+                # Get the largest image URL from the dynamic data
+                largest_image_url = max(image_data.keys(), key=lambda u: image_data[u][0])
+                image_urls.append(largest_image_url)
+            except (json.JSONDecodeError, KeyError):
+                pass # Fallback if JSON is invalid
+
+        # Priority 2: Fallback to the thumbnail gallery if the above fails
+        if not image_urls:
+            gallery_elements = soup.select("#altImages .a-button-thumbnail img")
+            for img in gallery_elements:
+                src = img.get('src')
+                if src:
+                    # Replace thumbnail size hints with a larger size
+                    high_res_url = re.sub(r'\._AC_US\d+_\.', '._AC_SL1500_.', src)
+                    image_urls.append(high_res_url)
+
+        # --- The rest of the scraping logic remains the same ---
         title = soup.select_one("#productTitle")
+        # ... (all other selectors and processing logic remains the same as before) ...
+        # --- Listing-specific Details ---
         mrp_element = soup.select_one("span.a-text-price span.a-offscreen")
         price_element = soup.select_one(".a-price-whole")
         currency_element = soup.select_one(".a-price-symbol")
@@ -23,7 +49,6 @@ class AmazonScraper:
         # --- Canonical Product Details ---
         brand_element = soup.select_one("#bylineInfo")
         feature_bullets_elements = soup.select("#feature-bullets li .a-list-item")
-        image_gallery_elements = soup.select("#altImages .a-button-thumbnail img")
         breadcrumbs_elements = soup.select("#wayfinding-breadcrumbs ul li .a-link-normal")
         spec_table_rows = soup.select("#productDetails_techSpec_section_1 tr")
 
@@ -44,14 +69,11 @@ class AmazonScraper:
                 num_ratings = int(ratings_match.group(0).replace(',', ''))
         
         listing = ListingDetails(
-            url=url,
-            price=price,
-            mrp=mrp,
+            url=url, price=price, mrp=mrp,
             currency=currency_element.text if currency_element else "₹",
             stock_status=availability_element.get_text(strip=True) if availability_element else "Not Found",
             seller_name=seller_element.get_text(strip=True) if seller_element else "Amazon",
-            average_rating=avg_rating,
-            num_ratings=num_ratings,
+            average_rating=avg_rating, num_ratings=num_ratings,
         )
 
         # --- Process Canonical Details ---
@@ -59,13 +81,6 @@ class AmazonScraper:
         brand = brand_element.get_text(strip=True).replace('Visit the ', '').replace(' Store', '') if brand_element else "Not Found"
         
         key_features = [feat.get_text(strip=True) for feat in feature_bullets_elements]
-        
-        image_urls = [img.get('src').replace('_AC_US40_', '_AC_SL1500_') for img in image_gallery_elements]
-        if not image_urls:
-            main_image = soup.select_one("#landingImage")
-            if main_image:
-                image_urls.append(main_image.get('src'))
-
         category_path = [crumb.get_text(strip=True) for crumb in breadcrumbs_elements]
         
         specifications = {row.th.get_text(strip=True): row.td.get_text(strip=True) for row in spec_table_rows}
@@ -77,11 +92,9 @@ class AmazonScraper:
         signature = re.sub(r'\s+', ' ', signature_str)
 
         product = ProductDetails(
-            signature=signature,
-            name=name,
-            brand=brand,
+            signature=signature, name=name, brand=brand,
             category_path=category_path,
-            image_urls=image_urls,
+            image_urls=image_urls, # Use the new, higher-quality list
             key_features=key_features,
             specifications=specifications,
             listing=listing
