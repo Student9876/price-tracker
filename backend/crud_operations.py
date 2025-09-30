@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 import schemas
 
 # Use clear and distinct aliases for each model file
@@ -65,9 +65,16 @@ def create_tracked_product_for_user(
     return db_tracked_product
 
 def get_tracked_products_for_user(db: Session, user_id: int):
-    """Fetches all products a specific user is tracking."""
-    # FIXED: Use the 'product_model' alias
-    return db.query(product_model.TrackedProduct).filter(product_model.TrackedProduct.owner_id == user_id).all()
+    """
+    Fetches all products a specific user is tracking.
+    """
+    # 2. Add .options(joinedload(...)) to the query to eagerly load product details
+    return (
+        db.query(product_model.TrackedProduct)
+        .options(joinedload(product_model.TrackedProduct.product))
+        .filter(product_model.TrackedProduct.owner_id == user_id)
+        .all()
+    )
 
 def get_all_active_tracked_products(db: Session):
     """Fetches all tracked products that are currently active."""

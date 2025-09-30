@@ -113,6 +113,20 @@ const apiService = {
         });
         return handleResponse(response);
     },
+
+    getSingleProduct: async (id, token) => {
+        const response = await fetch(`${API_URL}/track/${id}`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+        });
+        return handleResponse(response);
+    },
+
+    getProductHistory: async (id, token) => {
+        const response = await fetch(`${API_URL}/track/${id}/history`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+        });
+        return handleResponse(response);
+    },
 };
 
 export default apiService;

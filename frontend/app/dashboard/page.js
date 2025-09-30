@@ -2,38 +2,48 @@
 import { useSelector, useDispatch } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { fetchProducts, addProduct, deleteProduct } from '@/lib/productsSlice';
 import { logout } from '@/lib/authSlice';
 import { Search, Loader, AlertCircle, Trash2, LogOut } from 'lucide-react';
 
 // A reusable card component for displaying a product
 const ProductCard = ({ product, onDelete }) => (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col">
-        <div className="p-4 flex-grow">
-            <img
-                src={product.product.image_urls[0]}
-                alt={product.product.name}
-                className="w-full h-40 object-contain mb-4"
-            />
-            <h3 className="text-sm font-semibold text-slate-800 h-10 overflow-hidden" title={product.product.name}>
-                {product.product.name}
-            </h3>
-        </div>
-        <div className="p-4 bg-slate-50 border-t border-slate-200">
-            <p className="text-lg font-bold text-slate-900">
-                {product.currency}{product.current_price}
-            </p>
-            {product.mrp && <p className="text-xs text-slate-500 line-through">M.R.P: {product.currency}{product.mrp}</p>}
-            <div className="mt-4 flex gap-2">
-                <button
-                    onClick={() => onDelete(product.id)}
-                    className="w-full bg-red-100 text-red-700 text-xs font-bold py-2 px-3 rounded-md hover:bg-red-200 transition-colors flex items-center justify-center gap-1"
-                >
-                    <Trash2 size={14} /> Stop Tracking
-                </button>
+    <Link href={`/dashboard/${product.id}`} className="block group">
+        <div className="bg-white rounded-lg shadow-md overflow-hidden group-hover:shadow-xl transition-shadow duration-300 flex flex-col h-full">
+            {/* This is the part that was missing */}
+            <div className="p-4 flex-grow">
+                {/* Check if image URLs exist before trying to display one */}
+                {product.product.image_urls && product.product.image_urls.length > 0 ? (
+                    <img
+                        src={product.product.image_urls[0]}
+                        alt={product.product.name}
+                        className="w-full h-40 object-contain mb-4"
+                    />
+                ) : (
+                    <div className="w-full h-40 bg-slate-200 flex items-center justify-center text-slate-500">No Image</div>
+                )}
+                <h3 className="text-sm font-semibold text-slate-800 h-10 overflow-hidden" title={product.product.name}>
+                    {product.product.name}
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">{product.product.brand}</p>
+            </div>
+
+            {/* This bottom part with price and delete button is the same as before */}
+            <div className="p-4 bg-slate-50 border-t border-slate-200">
+                <p className="text-lg font-bold text-slate-900">{product.currency}{product.current_price}</p>
+                {product.mrp && <p className="text-xs text-slate-500 line-through">M.R.P: {product.currency}{product.mrp}</p>}
+                <div className="mt-4">
+                    <button
+                        onClick={(e) => { e.preventDefault(); onDelete(product.id); }}
+                        className="w-full bg-red-100 text-red-700 text-xs font-bold py-2 px-3 rounded-md hover:bg-red-200 transition-colors flex items-center justify-center gap-1"
+                    >
+                        <Trash2 size={14} /> Stop Tracking
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
+    </Link>
 );
 
 

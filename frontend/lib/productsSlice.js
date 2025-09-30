@@ -14,6 +14,31 @@ export const fetchProducts = createAsyncThunk(
     }
 );
 
+export const fetchSingleProduct = createAsyncThunk(
+    'products/fetchSingle',
+    async (id, { getState, rejectWithValue }) => {
+        try {
+            const token = getState().auth.token;
+            return await apiService.getSingleProduct(id, token);
+        } catch (error) {
+            return rejectWithValue(error.message);
+        }
+    }
+);
+
+export const fetchProductHistory = createAsyncThunk(
+    'products/fetchHistory',
+    async (id, { getState, rejectWithValue }) => {
+        try {
+            const token = getState().auth.token;
+            return await apiService.getProductHistory(id, token);
+        } catch (error) {
+            return rejectWithValue(error.message);
+        }
+    }
+);
+
+
 // Thunk to add a new product
 export const addProduct = createAsyncThunk(
     'products/addProduct',
@@ -46,6 +71,11 @@ const productsSlice = createSlice({
     name: 'products',
     initialState: {
         items: [],
+        selectedProduct: {
+            details: null,
+            history: [],
+            status: 'idle',
+        },
         status: 'idle', // 'idle' | 'loading' | 'succeeded' | 'failed'
         error: null,
     },
@@ -69,6 +99,16 @@ const productsSlice = createSlice({
             .addCase(deleteProduct.fulfilled, (state, action) => {
                 // Remove the deleted item from the state
                 state.items = state.items.filter((item) => item.id !== action.payload);
+            })
+            .addCase(fetchSingleProduct.pending, (state) => {
+                state.selectedProduct.status = 'loading';
+            })
+            .addCase(fetchSingleProduct.fulfilled, (state, action) => {
+                state.selectedProduct.status = 'succeeded';
+                state.selectedProduct.details = action.payload;
+            })
+            .addCase(fetchProductHistory.fulfilled, (state, action) => {
+                state.selectedProduct.history = action.payload;
             });
     },
 });
