@@ -38,6 +38,7 @@ app = FastAPI(
 
 origins = [
     "http://localhost:3000", # Your Next.js frontend
+    "https://price-tracker-ashen.vercel.app"
 ]
 
 # 3. Add the CORSMiddleware to the app
