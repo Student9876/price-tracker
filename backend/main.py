@@ -10,6 +10,9 @@ from datetime import timedelta
 from core import security
 import crud_operations as crud_operations
 from api.deps import get_current_user
+from contextlib import asynccontextmanager
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from scheduler import check_all_prices
 
 
 # Database imports
@@ -29,11 +32,31 @@ from scrapers.factory import scrape_url
 # Create all database tables (run this once)
 Base.metadata.create_all(bind=engine)
 
+
+
+# --- LIFESPAN FUNCTION ---
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # This code runs on startup
+    scheduler = AsyncIOScheduler()
+    # Schedule check_all_prices to run every X minutes
+    # !!! CHANGE interval for testing !!!
+    scheduler.add_job(check_all_prices, "interval", minutes=1440, misfire_grace_time=30)
+    scheduler.start()
+    print("Scheduler has been started...")
+    yield
+    # This code runs on shutdown
+    scheduler.shutdown()
+    print("Scheduler has been shut down.")
+
+
+
+
 app = FastAPI(
     title="Price Tracker API",
-    description="API for tracking product prices and managing users."
+    description="API for tracking product prices and managing users.",
+    lifespan=lifespan # Add the lifespan manager here
 )
-
 
 
 origins = [
@@ -52,7 +75,6 @@ app.add_middleware(
 
 
 
-
 # Dependency to get a DB session
 def get_db():
     db = SessionLocal()
@@ -61,9 +83,10 @@ def get_db():
     finally:
         db.close()
 
+
+
+
 # --- User and Auth Endpoints ---
-
-
 @app.post("/auth/register", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(models.user.User).filter(

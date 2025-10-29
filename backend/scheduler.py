@@ -2,9 +2,9 @@ import asyncio
 from sqlalchemy.orm import Session
 
 from db.session import SessionLocal
-import backend.crud_operations as crud_operations
-from backend.scrapers.factory import scrape_url
-import backend.schemas as schemas
+import crud_operations
+from scrapers.factory import scrape_url
+import schemas
 
 async def check_all_prices():
     """
