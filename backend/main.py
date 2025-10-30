@@ -87,6 +87,15 @@ def get_db():
 
 
 # --- User and Auth Endpoints ---
+
+@app.get("/")
+def read_root():
+    """
+    A simple endpoint to confirm the API is running.
+    """
+    return {"message": "Welcome to the Price Tracker API!"}
+
+
 @app.post("/auth/register", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(models.user.User).filter(
